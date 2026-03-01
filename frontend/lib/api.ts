@@ -1,0 +1,42 @@
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
+
+function getToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  return localStorage.getItem('token');
+}
+
+export async function api<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<{ data?: T; error?: string; status: number }> {
+  const token = getToken();
+  const headers: HeadersInit = {
+    'Content-Type': 'application/json',
+    ...(options.headers as Record<string, string>),
+  };
+  if (token) (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  const status = res.status;
+  let data: T | undefined;
+  let error: string | undefined;
+  const text = await res.text();
+  try {
+    const parsed = text ? JSON.parse(text) : {};
+    data = parsed as T;
+    if (!res.ok) error = (parsed as { error?: string }).error || res.statusText;
+  } catch {
+    error = res.statusText || 'Request failed';
+  }
+  return { data, error, status };
+}
+
+export function setToken(token: string) {
+  if (typeof window !== 'undefined') localStorage.setItem('token', token);
+}
+
+export function clearToken() {
+  if (typeof window !== 'undefined') localStorage.removeItem('token');
+}
+
+export { API_URL };
