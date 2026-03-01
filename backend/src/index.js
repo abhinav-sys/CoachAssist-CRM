@@ -1,7 +1,10 @@
 import 'dotenv/config';
 
-if (!process.env.JWT_SECRET || process.env.JWT_SECRET.trim() === '') {
-  console.error('Fatal: JWT_SECRET must be set in backend/.env (e.g. JWT_SECRET=your_secret_here)');
+const hasJwtSecret = process.env.JWT_SECRET && process.env.JWT_SECRET.trim() !== '';
+if (!hasJwtSecret) {
+  console.error('Fatal: JWT_SECRET is missing or empty.');
+  console.error('Local: set it in backend/.env');
+  console.error('Render: Dashboard → your service → Environment → Add Variable: Key=JWT_SECRET, Value=<your-secret>');
   process.exit(1);
 }
 

@@ -112,7 +112,7 @@ export default function LeadsPage() {
       toast.success('Lead added');
       setModalOpen(false);
       setForm({ name: '', phone: '', source: '', tags: '' });
-      fetchLeads();
+      fetchLeads(1, false);
     }
   }
 
