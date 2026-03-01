@@ -35,18 +35,26 @@ export async function api<T>(
   };
   if (token) (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
 
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 25000);
+
   let res: Response;
   try {
-    res = await fetch(`${baseUrl}${path}`, { ...options, headers });
+    res = await fetch(`${baseUrl}${path}`, { ...options, headers, signal: controller.signal });
   } catch (err) {
+    clearTimeout(timeoutId);
     const message = err instanceof Error ? err.message : 'Request failed';
+    const isAbort = err instanceof Error && err.name === 'AbortError';
     return {
-      error: message === 'Failed to fetch'
-        ? 'Cannot reach the server. Check that the backend is running and NEXT_PUBLIC_API_URL is correct.'
-        : message,
+      error: isAbort
+        ? 'Server is taking too long (free tier may be waking up). Please try again in a moment.'
+        : message === 'Failed to fetch'
+          ? 'Cannot reach the server. Check that the backend is running and NEXT_PUBLIC_API_URL is correct.'
+          : message,
       status: 0,
     };
   }
+  clearTimeout(timeoutId);
 
   const status = res.status;
   let data: T | undefined;

@@ -11,6 +11,7 @@ if (!hasJwtSecret) {
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
+import mongoose from 'mongoose';
 import { connectDB } from './utils/db.js';
 import authRoutes from './routes/auth.js';
 import leadRoutes from './routes/leads.js';
@@ -20,12 +21,26 @@ import { authMiddleware } from './middleware/auth.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-app.use(cors({ origin: process.env.FRONTEND_ORIGIN || 'http://localhost:3000', credentials: true }));
+// Allow one or more origins (comma-separated), e.g. https://your-app.vercel.app
+const allowedOrigins = (process.env.FRONTEND_ORIGIN || 'http://localhost:3000')
+  .split(',')
+  .map((o) => o.trim())
+  .filter(Boolean);
+app.use(cors({ origin: allowedOrigins, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());
 
-// Health check (no auth)
-app.get('/health', (_, res) => res.json({ ok: true }));
+// Health check (no auth) — only "ok" when server and MongoDB are connected
+app.get('/health', (_, res) => {
+  const dbConnected = mongoose.connection.readyState === 1;
+  if (!dbConnected) {
+    return res.status(503).json({ ok: false, error: 'Database not connected', readyState: mongoose.connection.readyState });
+  }
+  res.json({ ok: true, database: 'connected' });
+});
+
+// Root: so visiting the API URL in a browser doesn't 404
+app.get('/', (_, res) => res.json({ message: 'CoachAssist API', docs: '/health for health check' }));
 
 // Auth routes (public)
 app.use('/auth', authRoutes);

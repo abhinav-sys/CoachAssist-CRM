@@ -1,0 +1,8 @@
+# Render: backend service (optional). In Dashboard, set Root Directory to "backend" if not using this.
+services:
+  - type: web
+    name: coachassist-backend
+    runtime: node
+    rootDir: backend
+    buildCommand: npm install
+    startCommand: npm start
