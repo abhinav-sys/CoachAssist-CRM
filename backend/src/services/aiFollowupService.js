@@ -48,7 +48,9 @@ Return exactly this JSON structure (no other text):
 
 Reply with only the JSON object.`;
 
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  // gemini-1.5-flash returns 404 for many new API keys; use 2.0 or set GEMINI_MODEL in env
+  const modelId = process.env.GEMINI_MODEL || 'gemini-2.0-flash';
+  const model = genAI.getGenerativeModel({ model: modelId });
   const result = await model.generateContent(prompt);
   const text = result.response?.text?.()?.trim() || '';
   if (!text) {
