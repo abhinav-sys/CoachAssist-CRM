@@ -124,7 +124,10 @@ export default function LeadDetailPage() {
     setAiLoading(false);
     if (status === 429) {
       const retryAfter = (data as { retryAfter?: number })?.retryAfter ?? 60;
-      toast.error(`Rate limit exceeded. Try again in ${retryAfter} seconds.`);
+      const msg = retryAfter >= 60
+        ? `Rate limit exceeded. Try again in ${Math.ceil(retryAfter / 60)} minute(s).`
+        : `Rate limit exceeded. Try again in ${retryAfter} seconds.`;
+      toast.error(msg);
       return;
     }
     if (error) {
