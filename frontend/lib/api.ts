@@ -45,11 +45,15 @@ export async function api<T>(
     clearTimeout(timeoutId);
     const message = err instanceof Error ? err.message : 'Request failed';
     const isAbort = err instanceof Error && err.name === 'AbortError';
+    const hint =
+      baseUrl.startsWith('http://localhost') || baseUrl === ''
+        ? ' On Vercel: set NEXT_PUBLIC_API_URL to your backend URL (e.g. https://coachassist-crm-csbz.onrender.com) in Settings → Environment Variables, then redeploy.'
+        : ' Check backend is up and FRONTEND_ORIGIN on Render matches this site.';
     return {
       error: isAbort
         ? 'Server is taking too long (free tier may be waking up). Please try again in a moment.'
         : message === 'Failed to fetch'
-          ? 'Cannot reach the server. Check that the backend is running and NEXT_PUBLIC_API_URL is correct.'
+          ? `Cannot reach the server at ${baseUrl}.${hint}`
           : message,
       status: 0,
     };
