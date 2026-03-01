@@ -1,7 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
-import Link from 'next/link';
+import { Suspense, useEffect, useState, useCallback } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api';
 import { toast } from 'sonner';
@@ -37,7 +36,7 @@ function useDebounce<T>(value: T, delay: number): T {
   return debounced;
 }
 
-export default function LeadsPage() {
+function LeadsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -293,5 +292,13 @@ export default function LeadsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function LeadsPage() {
+  return (
+    <Suspense fallback={<div className="p-6 space-y-4"><div className="h-14 bg-slate-100 rounded animate-pulse" /><div className="h-14 bg-slate-100 rounded animate-pulse" /><div className="h-14 bg-slate-100 rounded animate-pulse" /></div>}>
+      <LeadsPageContent />
+    </Suspense>
   );
 }

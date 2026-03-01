@@ -16,7 +16,19 @@ export async function api<T>(
   };
   if (token) (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
 
-  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`, { ...options, headers });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Request failed';
+    return {
+      error: message === 'Failed to fetch'
+        ? 'Cannot reach the server. Check that the backend is running and NEXT_PUBLIC_API_URL is correct.'
+        : message,
+      status: 0,
+    };
+  }
+
   const status = res.status;
   let data: T | undefined;
   let error: string | undefined;
