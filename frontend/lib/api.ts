@@ -5,10 +5,29 @@ function getToken(): string | null {
   return localStorage.getItem('token');
 }
 
+/** Skip API calls when the system has no backend URL (e.g. build or missing env). */
+function getBaseUrl(): string | null {
+  const envUrl = process.env.NEXT_PUBLIC_API_URL;
+  if (typeof window === 'undefined') {
+    if (!envUrl || String(envUrl).trim() === '') return null;
+    return String(envUrl).trim().replace(/\/$/, '');
+  }
+  const base = envUrl && String(envUrl).trim() !== '' ? String(envUrl).trim() : 'http://localhost:5000';
+  return base.replace(/\/$/, '');
+}
+
 export async function api<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<{ data?: T; error?: string; status: number }> {
+  const baseUrl = getBaseUrl();
+  if (!baseUrl) {
+    return {
+      error: 'API URL not configured. Set NEXT_PUBLIC_API_URL in your environment.',
+      status: 0,
+    };
+  }
+
   const token = getToken();
   const headers: HeadersInit = {
     'Content-Type': 'application/json',
@@ -18,7 +37,7 @@ export async function api<T>(
 
   let res: Response;
   try {
-    res = await fetch(`${API_URL}${path}`, { ...options, headers });
+    res = await fetch(`${baseUrl}${path}`, { ...options, headers });
   } catch (err) {
     const message = err instanceof Error ? err.message : 'Request failed';
     return {
@@ -40,6 +59,13 @@ export async function api<T>(
   } catch {
     error = res.statusText || 'Request failed';
   }
+
+  // Invalid or expired token: clear and send user to login
+  if (status === 401 || (error && /invalid|expired.*token/i.test(error))) {
+    clearToken();
+    if (typeof window !== 'undefined') window.location.href = '/login';
+  }
+
   return { data, error, status };
 }
 

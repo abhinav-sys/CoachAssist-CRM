@@ -74,20 +74,28 @@ export default function LeadDetailPage() {
       return;
     }
     if (data) {
-      if (cursor) setActivities((prev) => [...prev, ...data.activities]);
-      else setActivities(data.activities);
-      setNextCursor(data.nextCursor);
+      const list = data.activities ?? [];
+      if (cursor) setActivities((prev) => [...prev, ...list]);
+      else setActivities(list);
+      setNextCursor(data.nextCursor ?? null);
     }
   }, [id]);
 
   useEffect(() => {
+    if (!id) {
+      setLoading(false);
+      return;
+    }
     (async () => {
       setLoading(true);
-      await fetchLead();
-      await fetchTimeline();
-      setLoading(false);
+      try {
+        await fetchLead();
+        await fetchTimeline();
+      } finally {
+        setLoading(false);
+      }
     })();
-  }, [fetchLead, fetchTimeline]);
+  }, [id, fetchLead, fetchTimeline]);
 
   async function handleSave() {
     if (!lead) return;

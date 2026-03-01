@@ -72,7 +72,10 @@ export default function DashboardPage() {
     );
   }
 
-  const funnelEntries = Object.entries(data.funnelCounts).filter(([, v]) => v !== undefined);
+  const funnelCounts = data.funnelCounts ?? {};
+  const funnelEntries = Object.entries(funnelCounts).filter(([, v]) => v !== undefined);
+  const topSources = data.topSources ?? [];
+  const activityGraph = data.activityGraph ?? [];
 
   return (
     <div className="space-y-6">
@@ -82,7 +85,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-lg border border-slate-200 p-4">
           <p className="text-sm text-slate-500">Conversion rate</p>
           <p className="text-2xl font-semibold text-emerald-600">
-            {(data.conversionRate * 100).toFixed(1)}%
+            {((data.conversionRate ?? 0) * 100).toFixed(1)}%
           </p>
         </div>
         <Link
@@ -90,7 +93,7 @@ export default function DashboardPage() {
           className="bg-white rounded-lg border border-slate-200 p-4 hover:border-emerald-300 transition"
         >
           <p className="text-sm text-slate-500">Overdue follow-ups</p>
-          <p className="text-2xl font-semibold text-slate-800">{data.overdueFollowUps}</p>
+          <p className="text-2xl font-semibold text-slate-800">{data.overdueFollowUps ?? 0}</p>
         </Link>
       </div>
 
@@ -114,11 +117,11 @@ export default function DashboardPage() {
       <div className="grid md:grid-cols-2 gap-6">
         <div className="bg-white rounded-lg border border-slate-200 p-4">
           <h2 className="text-lg font-medium text-slate-800 mb-4">Top sources</h2>
-          {data.topSources.length === 0 ? (
+          {topSources.length === 0 ? (
             <p className="text-slate-500 text-sm">No source data yet.</p>
           ) : (
             <ResponsiveContainer width="100%" height={200}>
-              <BarChart data={data.topSources}>
+              <BarChart data={topSources}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
                 <XAxis dataKey="source" tick={{ fontSize: 12 }} />
                 <YAxis tick={{ fontSize: 12 }} />
@@ -131,7 +134,7 @@ export default function DashboardPage() {
         <div className="bg-white rounded-lg border border-slate-200 p-4">
           <h2 className="text-lg font-medium text-slate-800 mb-4">Activity (last 7 days)</h2>
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={data.activityGraph}>
+            <LineChart data={activityGraph}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
               <XAxis dataKey="date" tick={{ fontSize: 10 }} />
               <YAxis tick={{ fontSize: 12 }} />
