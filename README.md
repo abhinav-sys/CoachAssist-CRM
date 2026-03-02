@@ -109,11 +109,13 @@ Indexes are defined in the Mongoose schemas and created on first use.
 
 ## Rate Limiting (AI Follow-up)
 
-- **Scope:** Per authenticated user.
+- **Scope:** Per authenticated user (and you can effectively disable it).
 - **Key:** `ai_rate:{userId}`.
-- **Limit:** 5 requests per hour.
-- **Mechanism:** Redis `INCR` on each `POST /leads/:id/ai-followup`. On first request in the window, set `EXPIRE key 3600`. If count &gt; 5, respond with **429** and `{ "error": "Rate limit exceeded", "retryAfter": <seconds> }`.
-- **Why:** Protects Gemini usage and avoids abuse.
+- **Limit:** Controlled via `AI_RATE_LIMIT_PER_HOUR` (default 15/hour).  
+  - `AI_RATE_LIMIT_PER_HOUR &gt; 0` → soft limit: when exceeded, the API still returns a **fallback follow-up** (no 429), but includes `fallback: true` and `retryAfter` in the payload.  
+  - `AI_RATE_LIMIT_PER_HOUR &lt;= 0` or unset → rate limiting is effectively **disabled**.
+- **Mechanism:** Redis `INCR` on each `POST /leads/:id/ai-followup`. On first request in the window, set `EXPIRE key 3600`. Logic is handled in `utils/redis.ts` + `aiFollowupController`.
+- **Why:** Protects Gemini usage while always giving the coach a usable follow-up (either AI or a hardcoded fallback).
 
 ---
 
@@ -167,7 +169,7 @@ curl -s "http://localhost:5000/leads?status=NEW&page=1" \
 curl -s -X POST http://localhost:5000/leads \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
-  -d '{"name":"John Doe","phone":"+1234567890","source":"Instagram","tags":["vip"]}'
+  -d '{"name":"John Doe","email":"john@example.com","phone":"+1234567890","source":"Instagram","tags":["vip"]}'
 # 201 + lead object
 ```
 
@@ -207,13 +209,20 @@ curl -s "http://localhost:5000/leads/LEAD_ID/timeline?cursor=2025-02-27T12:00:00
   -H "Authorization: Bearer $TOKEN"
 ```
 
-**Generate AI follow-up** (rate-limited: 5/hour per user)
+**Generate AI follow-up**
 
 ```bash
 curl -s -X POST http://localhost:5000/leads/LEAD_ID/ai-followup \
   -H "Authorization: Bearer $TOKEN"
-# 200: {"whatsappMessage":"...","callScript":["...","...","..."],"objectionHandling":"..."}
-# 429: {"error":"Rate limit exceeded","retryAfter":3600}
+# 200: {
+#   "whatsappMessage": "...",       // short message for WhatsApp / SMS
+#   "emailSubject": "...",          // subject line for email
+#   "emailBody": "...",             // multi-paragraph email body (\\n for line breaks)
+#   "callScript": ["...","...","..."],
+#   "objectionHandling": "...",
+#   "fallback": true|false,         // true when Gemini failed or rate limit fallback kicked in
+#   "retryAfter": 123               // seconds until rate window resets (only when fallback due to rate limit)
+# }
 ```
 
 ### Dashboard (auth required)
