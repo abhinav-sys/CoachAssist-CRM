@@ -22,6 +22,34 @@ async function getLeadWithRecentActivities(leadId) {
 }
 
 /**
+ * Build a simple, hardcoded follow-up when AI is unavailable or rate limited.
+ */
+function buildFallbackFollowup(lead) {
+  const name = (lead?.name || '').split(' ')[0] || 'there';
+  const status = lead?.status || 'NEW';
+  const source = lead?.source || 'your enquiry';
+
+  const whatsappMessage =
+    `Hi ${name}, this is your wellness coach checking in about ${source}. ` +
+    `I wanted to follow up and see how you’re feeling and whether now is a good time ` +
+    `to take the next step with your coaching plan.`;
+
+  const callScript = [
+    `Ask how ${name} has been feeling lately and listen carefully.`,
+    'Remind them of the goals they mentioned when they first enquired.',
+    'Offer a specific next step (e.g. a short call or first session) and propose a time.',
+  ];
+
+  const objectionHandling =
+    status === 'INTERESTED'
+      ? 'If they hesitate, remind them that small, consistent changes matter more than perfection. ' +
+        'Reassure them that the first step is light and focused on understanding their needs, not pushing a hard commitment.'
+      : 'If they are not ready, thank them for their time, leave the door open, and ask if you can check in again in a couple of weeks.';
+
+  return { whatsappMessage, callScript, objectionHandling };
+}
+
+/**
  * Build prompt and call Gemini; return parsed JSON.
  */
 async function generateFollowUpWithGemini(lead, activities) {
@@ -80,7 +108,13 @@ export async function generateAiFollowup(leadId, userId) {
   const data = await getLeadWithRecentActivities(leadId);
   if (!data) return null;
 
-  const output = await generateFollowUpWithGemini(data.lead, data.activities);
+  let output;
+  try {
+    output = await generateFollowUpWithGemini(data.lead, data.activities);
+  } catch (err) {
+    console.error('AI follow-up failed, using fallback:', err);
+    output = buildFallbackFollowup(data.lead);
+  }
 
   const lead = await Lead.findByIdAndUpdate(
     leadId,
@@ -88,6 +122,29 @@ export async function generateAiFollowup(leadId, userId) {
     { new: true }
   );
   if (!lead) return null;
+
+  await logActivity(leadId, 'AI_MESSAGE_GENERATED', output);
+
+  return output;
+}
+
+/**
+ * Generate follow-up using only the hardcoded fallback, without calling Gemini.
+ * Used when our own rate limiter blocks an AI call.
+ */
+export async function generateFallbackAiFollowup(leadId, userId) {
+  if (!mongoose.Types.ObjectId.isValid(leadId)) return null;
+  const lead = await Lead.findById(leadId).lean();
+  if (!lead) return null;
+
+  const output = buildFallbackFollowup(lead);
+
+  const updated = await Lead.findByIdAndUpdate(
+    leadId,
+    { $set: { aiFollowup: output } },
+    { new: true }
+  );
+  if (!updated) return null;
 
   await logActivity(leadId, 'AI_MESSAGE_GENERATED', output);
 
