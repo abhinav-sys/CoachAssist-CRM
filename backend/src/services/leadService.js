@@ -23,6 +23,7 @@ export async function listLeads({ status, tags, search, page = 1, limit = 20 }) 
     filter.$or = [
       { name: { $regex: s, $options: 'i' } },
       { phone: { $regex: s, $options: 'i' } },
+      { email: { $regex: s, $options: 'i' } },
     ];
   }
 

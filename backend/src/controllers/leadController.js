@@ -18,12 +18,12 @@ export async function list(req, res, next) {
 
 export async function create(req, res, next) {
   try {
-    const { name, phone, source, status, tags, assignedTo, nextFollowUpAt } = req.body;
+    const { name, email, phone, source, status, tags, assignedTo, nextFollowUpAt } = req.body;
     if (!name) {
       return res.status(400).json({ error: 'Name is required' });
     }
     const lead = await leadService.createLead(
-      { name, phone, source, status, tags, assignedTo, nextFollowUpAt },
+      { name, email, phone, source, status, tags, assignedTo, nextFollowUpAt },
       req.userId
     );
     res.status(201).json(lead);

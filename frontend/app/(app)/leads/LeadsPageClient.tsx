@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 type Lead = {
   _id: string;
   name: string;
+  email?: string;
   phone?: string;
   source?: string;
   status: string;
@@ -49,7 +50,7 @@ function LeadsPageContent() {
   const debouncedSearch = useDebounce(search, 300);
   const [modalOpen, setModalOpen] = useState(false);
   const [formLoading, setFormLoading] = useState(false);
-  const [form, setForm] = useState({ name: '', phone: '', source: '', tags: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', source: '', tags: '' });
 
   const fetchLeads = useCallback(
     async (pageNum: number, append: boolean) => {
@@ -101,6 +102,7 @@ function LeadsPageContent() {
       method: 'POST',
       body: JSON.stringify({
         name: form.name.trim(),
+        email: form.email.trim() || undefined,
         phone: form.phone.trim() || undefined,
         source: form.source || undefined,
         tags: tags.length ? tags : undefined,
@@ -114,7 +116,7 @@ function LeadsPageContent() {
     if (data) {
       toast.success('Lead added');
       setModalOpen(false);
-      setForm({ name: '', phone: '', source: '', tags: '' });
+      setForm({ name: '', email: '', phone: '', source: '', tags: '' });
       fetchLeads(1, false);
     }
   }
@@ -157,7 +159,7 @@ function LeadsPageContent() {
             />
           </div>
           <div className="flex-1 min-w-[160px]">
-            <label className="block text-xs font-medium text-slate-500 mb-1">Search (name/phone)</label>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Search (name/email/phone)</label>
             <input
               type="text"
               value={search}
@@ -186,6 +188,7 @@ function LeadsPageContent() {
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
                   <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Name</th>
+                  <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Email</th>
                   <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Phone</th>
                   <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Source</th>
                   <th className="text-left text-xs font-medium text-slate-500 uppercase px-4 py-3">Status</th>
@@ -200,6 +203,7 @@ function LeadsPageContent() {
                     className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
                   >
                     <td className="px-4 py-3 font-medium text-slate-800">{lead.name}</td>
+                    <td className="px-4 py-3 text-slate-600 text-sm">{lead.email || '—'}</td>
                     <td className="px-4 py-3 text-slate-600">{lead.phone || '—'}</td>
                     <td className="px-4 py-3 text-slate-600">{lead.source || '—'}</td>
                     <td className="px-4 py-3">
@@ -240,6 +244,16 @@ function LeadsPageContent() {
                   value={form.name}
                   onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
                   required
+                  className="w-full rounded-lg border border-slate-300 px-3 py-2"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={form.email}
+                  onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                  placeholder="client@example.com"
                   className="w-full rounded-lg border border-slate-300 px-3 py-2"
                 />
               </div>

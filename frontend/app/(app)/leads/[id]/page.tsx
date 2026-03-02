@@ -9,13 +9,20 @@ import { toast } from 'sonner';
 type Lead = {
   _id: string;
   name: string;
+  email?: string;
   phone?: string;
   source?: string;
   status: string;
   tags?: string[];
   nextFollowUpAt?: string;
   assignedTo?: { name: string; email: string };
-  aiFollowup?: { whatsappMessage?: string; callScript?: string[]; objectionHandling?: string };
+  aiFollowup?: {
+    whatsappMessage?: string;
+    emailSubject?: string;
+    emailBody?: string;
+    callScript?: string[];
+    objectionHandling?: string;
+  };
 };
 
 type Activity = {
@@ -179,6 +186,16 @@ export default function LeadDetailPage() {
             />
           </div>
           <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Email</label>
+            <input
+              type="email"
+              value={edit.email ?? ''}
+              onChange={(e) => setEdit((e2) => ({ ...e2, email: e.target.value }))}
+              placeholder="client@example.com"
+              className="w-full rounded-lg border border-slate-300 px-3 py-2"
+            />
+          </div>
+          <div>
             <label className="block text-xs font-medium text-slate-500 mb-1">Phone</label>
             <input
               type="text"
@@ -251,9 +268,35 @@ export default function LeadDetailPage() {
         </div>
         {aiResult && (
           <div className="space-y-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+            {(aiResult.emailSubject || aiResult.emailBody || aiResult.whatsappMessage) && (
+              <div className="flex justify-end">
+                {lead?.email ? (
+                  <a
+                    href={`mailto:${encodeURIComponent(lead.email)}?subject=${encodeURIComponent(aiResult.emailSubject || `Follow-up – ${lead.name}`)}&body=${encodeURIComponent(aiResult.emailBody || aiResult.whatsappMessage || '')}`}
+                    className="text-sm font-medium text-emerald-600 hover:text-emerald-700 hover:underline"
+                  >
+                    Send follow-up by email →
+                  </a>
+                ) : (
+                  <span className="text-xs text-slate-500">Add the lead’s email above to send follow-up by email.</span>
+                )}
+              </div>
+            )}
+            {aiResult.emailSubject && (
+              <div>
+                <p className="text-xs font-medium text-slate-500 mb-1">Email subject</p>
+                <p className="text-slate-700 text-sm whitespace-pre-wrap">{aiResult.emailSubject}</p>
+              </div>
+            )}
+            {aiResult.emailBody && (
+              <div>
+                <p className="text-xs font-medium text-slate-500 mb-1">Email body</p>
+                <p className="text-slate-700 text-sm whitespace-pre-wrap">{aiResult.emailBody}</p>
+              </div>
+            )}
             {aiResult.whatsappMessage && (
               <div>
-                <p className="text-xs font-medium text-slate-500 mb-1">WhatsApp message</p>
+                <p className="text-xs font-medium text-slate-500 mb-1">Message (for WhatsApp/SMS)</p>
                 <p className="text-slate-700 text-sm whitespace-pre-wrap">{aiResult.whatsappMessage}</p>
               </div>
             )}

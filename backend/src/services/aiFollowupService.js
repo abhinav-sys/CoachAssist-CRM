@@ -34,6 +34,16 @@ function buildFallbackFollowup(lead) {
     `I wanted to follow up and see how you’re feeling and whether now is a good time ` +
     `to take the next step with your coaching plan.`;
 
+  const emailSubject = `Quick check-in about your coaching (${source})`;
+
+  const emailBody =
+    `Hi ${name},\n\n` +
+    `I hope you’ve been doing well. I’m just checking in about ${source} ` +
+    `and to see how you’re feeling about moving forward with your wellness goals.\n\n` +
+    `If you’d like, we can book a short call to talk through where you are now and what the next best step could be for you.\n\n` +
+    `Reply to this email and let me know what works best for you.\n\n` +
+    `Best,\nYour coach`;
+
   const callScript = [
     `Ask how ${name} has been feeling lately and listen carefully.`,
     'Remind them of the goals they mentioned when they first enquired.',
@@ -46,7 +56,7 @@ function buildFallbackFollowup(lead) {
         'Reassure them that the first step is light and focused on understanding their needs, not pushing a hard commitment.'
       : 'If they are not ready, thank them for their time, leave the door open, and ask if you can check in again in a couple of weeks.';
 
-  return { whatsappMessage, callScript, objectionHandling };
+  return { whatsappMessage, emailSubject, emailBody, callScript, objectionHandling };
 }
 
 /**
@@ -69,7 +79,9 @@ Last activities: ${JSON.stringify(activities)}
 
 Return exactly this JSON structure (no other text):
 {
-  "whatsappMessage": "A short, friendly WhatsApp message (2-3 sentences) to send to the lead",
+  "whatsappMessage": "A short, friendly message (2-3 sentences) suitable for WhatsApp or SMS, in plain text, no emojis",
+  "emailSubject": "A concise email subject line for a follow-up",
+  "emailBody": "A 2-4 paragraph email body in plain text. Use line breaks (\\n) for new paragraphs.",
   "callScript": ["bullet point 1 for the coach to say", "bullet point 2", "bullet point 3"],
   "objectionHandling": "${needsObjection ? 'Brief advice on handling common objections for an interested lead' : 'N/A - not needed for this status'}"
 }
