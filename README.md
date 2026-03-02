@@ -13,6 +13,15 @@ A mini CRM for wellness coaches: manage leads, view activity timelines, and gene
 
 ---
 
+## Live deployment
+
+- **Frontend (app):** https://coach-assist-crm.vercel.app/
+- **Backend (API):** https://coachassist-crm-csbz.onrender.com
+
+The frontend is configured to talk to the backend via `NEXT_PUBLIC_API_URL` in the Vercel project settings.
+
+---
+
 ## Setup
 
 ### Prerequisites
